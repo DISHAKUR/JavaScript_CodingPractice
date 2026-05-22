@@ -1,0 +1,321 @@
+import {
+  Component,
+  EventEmitter,
+  forwardRef,
+  Input,
+  OnInit,
+  Output,
+  TemplateRef,
+  ViewChild,
+} from '@angular/core';
+
+import {
+  ControlValueAccessor,
+  NG_VALUE_ACCESSOR,
+} from '@angular/forms';
+
+import {
+  NgbTypeahead,
+  NgbTypeaheadSelectItemEvent,
+} from '@ng-bootstrap/ng-bootstrap';
+
+import {
+  BehaviorSubject,
+  EMPTY,
+  merge,
+  Observable,
+  of,
+} from 'rxjs';
+
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  filter,
+  map,
+  switchMap,
+  tap,
+} from 'rxjs/operators';
+
+import {
+  Address,
+  AddressOption,
+  FindAddressResponse,
+} from './address-interfaces';
+
+import { AutoAddressService } from './autoaddress.service';
+
+export interface AddressEvent {
+  displayName: string;
+  state: string;
+}
+
+export interface TooManyResultsEvent extends AddressEvent {
+  resultNumber: number;
+}
+
+@Component({
+  selector: 'gde-address-lookup',
+  templateUrl: './address-lookup.component.html',
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => AddressLookupComponent),
+      multi: true,
+    },
+  ],
+})
+export class AddressLookupComponent
+  implements ControlValueAccessor, OnInit
+{
+  @ViewChild(NgbTypeahead, { static: true })
+  public typeahead: NgbTypeahead;
+
+  @Input()
+  public endpoints: any;
+
+  @Input()
+  public additionalHeaders: any;
+
+  @Input()
+  public placeholder: string;
+
+  @Input()
+  public noResultsTemplateRef: TemplateRef<any>;
+
+  @Input()
+  public tooManyResultsTemplateRef: TemplateRef<any>;
+
+  @Input()
+  public serviceNotRespondingTemplateRef: TemplateRef<any>;
+
+  @Output()
+  public valueChange = new EventEmitter<Address>();
+
+  @Output()
+  public blur = new EventEmitter<string>();
+
+  @Output()
+  public focus = new EventEmitter<Event>();
+
+  @Output('status')
+  public status$ =
+    new BehaviorSubject<
+      AddressEvent | TooManyResultsEvent | false
+    >(false);
+
+  public loading = false;
+
+  public isDisabled = false;
+
+  public finalSelectedAddress: Address = null;
+
+  // =====================================================
+  // CONTROL VALUE ACCESSOR
+  // =====================================================
+
+  private onChange: any = () => {};
+
+  private onTouched: any = () => {};
+
+  writeValue(value: Address): void {
+    this.finalSelectedAddress = value;
+  }
+
+  registerOnChange(fn: any): void {
+    this.onChange = fn;
+  }
+
+  registerOnTouched(fn: any): void {
+    this.onTouched = fn;
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    this.isDisabled = isDisabled;
+  }
+
+  // =====================================================
+  // INIT
+  // =====================================================
+
+  constructor(
+    private autoAddressService: AutoAddressService
+  ) {}
+
+  ngOnInit(): void {
+    this.autoAddressService.endpoints =
+      this.endpoints;
+
+    this.autoAddressService.additionalHeaders =
+      this.additionalHeaders;
+  }
+
+  // =====================================================
+  // FORMATTER
+  // =====================================================
+
+  formatter = (
+    address: AddressOption
+  ): string => {
+    return address?.displayName || '';
+  };
+
+  // =====================================================
+  // SEARCH
+  // =====================================================
+
+  getOptions = (
+    text$: Observable<string>
+  ): Observable<any> => {
+    return text$.pipe(
+      debounceTime(400),
+
+      distinctUntilChanged(),
+
+      tap(() => {
+        this.loading = true;
+        this.status$.next(false);
+      }),
+
+      switchMap((term: string) => {
+        if (!term || term.length < 2) {
+          this.loading = false;
+          return of([]);
+        }
+
+        return this.autoCompleteAddress(term);
+      }),
+
+      tap(() => {
+        this.loading = false;
+      }),
+
+      catchError(() => {
+        this.loading = false;
+
+        this.setStatus({
+          state: 'ServiceNotResponding',
+          displayName:
+            'Sorry service is not responding',
+        });
+
+        return of([]);
+      })
+    );
+  };
+
+  // =====================================================
+  // AUTOCOMPLETE
+  // =====================================================
+
+  autoCompleteAddress(
+    addressPartial: string
+  ): Observable<Array<AddressOption>> {
+    return this.autoAddressService
+      .autoCompleteAddress(addressPartial)
+      .pipe(
+        map(
+          (
+            response: FindAddressResponse
+          ): Array<AddressOption> => {
+            if (response.totalOptions === 0) {
+              this.setStatus({
+                state: 'NoResults',
+                displayName: 'No results',
+              });
+
+              return [];
+            }
+
+            return response.options || [];
+          }
+        ),
+
+        catchError(() => {
+          this.setStatus({
+            state: 'ServiceNotResponding',
+            displayName:
+              'Sorry service is not responding',
+          });
+
+          return of([]);
+        })
+      );
+  }
+
+  // =====================================================
+  // SELECT ADDRESS
+  // =====================================================
+
+  addressSelected(
+    event: NgbTypeaheadSelectItemEvent
+  ): void {
+    if (event.item.error) {
+      event.preventDefault();
+      return;
+    }
+
+    this.loading = true;
+
+    this.autoAddressService
+      .findPartialAddress(event.item)
+      .pipe(
+        catchError(() => {
+          this.loading = false;
+
+          this.setStatus({
+            state: 'ServiceNotResponding',
+            displayName:
+              'Sorry service is not responding',
+          });
+
+          return EMPTY;
+        })
+      )
+      .subscribe((response: FindAddressResponse) => {
+        this.loading = false;
+
+        const {
+          matchLevel: { code },
+          gdeAddress,
+        } = response;
+
+        const selectedAddress: Address = {
+          matchLevel: code,
+          ...gdeAddress,
+        };
+
+        // IMPORTANT
+        this.finalSelectedAddress =
+          selectedAddress;
+
+        // update angular form
+        this.onChange(selectedAddress);
+
+        // optional emit
+        this.valueChange.emit(selectedAddress);
+
+        // clear errors
+        this.status$.next(false);
+
+        // stop ng-bootstrap overwrite
+        event.preventDefault();
+      });
+  }
+
+  // =====================================================
+  // STATUS
+  // =====================================================
+
+  setStatus(
+    event: AddressEvent | TooManyResultsEvent
+  ): void {
+    this.loading = false;
+
+    this.status$.next(event);
+
+    if (this.typeahead) {
+      this.typeahead.dismissPopup();
+    }
+  }
+}
