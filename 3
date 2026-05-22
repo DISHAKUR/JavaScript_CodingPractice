@@ -1,0 +1,26 @@
+this.finalSelectedAddress = selectedAddress;
+
+// IMPORTANT
+this.onChange(selectedAddress);
+
+// MARK FIELD TOUCHED
+this.onTouched();
+
+// emit change
+this.valueChange.emit(selectedAddress);
+
+// clear validation
+this.status$.next(false);
+
+// close popup
+event.preventDefault();
+
+// VERY IMPORTANT
+setTimeout(() => {
+  const input: any = document.querySelector('input');
+
+  if (input) {
+    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new Event('blur'));
+  }
+});
