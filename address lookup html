@@ -1,0 +1,23 @@
+<ng-template #noResultsTemplateRef>
+  <cnm-content [content]="to.noResultsMessage"></cnm-content>
+</ng-template>
+<ng-template #tooManyResultsTemplateRef>
+  <cnm-content [content]="to.tooManyResultsMessage"></cnm-content>
+</ng-template>
+
+<ng-template #serviceNotRespondingTemplateRef>
+  <cnm-content [content]="to.serviceNotRespondingMessage"></cnm-content>
+</ng-template>
+
+<gde-address-lookup
+  [class.is-invalid]="showError"
+  [placeholder]="to.placeholder"
+  [endpoints]="to.endpoints"
+  [additionalHeaders]="to.additionalHeaders"
+  [noResultsTemplateRef]="noResultsTemplateRef"
+  [tooManyResultsTemplateRef]="tooManyResultsTemplateRef"
+  [serviceNotRespondingTemplateRef]="serviceNotRespondingTemplateRef"
+  (status)="setFoundTooManyResultsNumber($event.resultNumber)"
+  [formlyAttributes]="field"
+>
+</gde-address-lookup>
