@@ -1,0 +1,9 @@
+"addressLine1": "${var: store.address.samePostalAddress:then(${var: store.address.enterManually:then(${var: store.address.manual.addressLine1}, ${var: store.address.enterEirCode:then(${var: store.address.eircodeOnly.addressLine1}, ${var: store.address.lookup.addressLine1})})}, ${var: store.address.customerAddress.addressLine1})}",
+
+"addressLine2": "${var: store.address.samePostalAddress:then(${var: store.address.enterManually:then(${var: store.address.manual.addressLine2:orNull}, ${var: store.address.enterEirCode:then(${var: store.address.eircodeOnly.addressLine2:orNull}, ${var: store.address.lookup.addressLine2:orNull})})}, ${var: store.address.customerAddress.addressLine2})}",
+
+"city": "${var: store.address.samePostalAddress:then(${var: store.address.enterManually:then(${var: store.address.manual.city}, ${var: store.address.enterEirCode:then(${var: store.address.eircodeOnly.city}, ${var: store.address.lookup.city})})}, ${var: store.address.customerAddress.city})}",
+
+"countyCode": "${var: store.address.samePostalAddress:then(${var: store.address.enterManually:then(${var: store.address.manual.country}, ${var: store.address.enterEirCode:then(${var: store.address.eircodeOnly.countyCode}, ${var: store.address.lookup.countyCode})})}, ${var: store.address.customerAddress.countyCode})}",
+
+"eirCode": "${var: store.address.samePostalAddress:then(${var: store.address.enterManually:then(${var: store.address.manual.eircode:orNull}, ${var: store.address.enterEirCode:then(${var: store.address.eircodeOnly.eircode:orNull}, ${var: store.address.lookup.eircode:orNull})})}, ${var: store.address.customerAddress.eircode})}"
