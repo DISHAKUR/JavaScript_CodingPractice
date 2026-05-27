@@ -1,0 +1,25 @@
+"addressLine1": "${var: store.address.enterManually:then(${var: store.address.manual.addressLine1}, ${var: store.address.enterEirCode:then(${var: store.address.eircodeOnly.addressLine1}, ${var: store.address.lookup.addressLine1})})}",
+"addressLine2": "${var: store.address.enterManually:then(${var: store.address.manual.addressLine2:orNull}, ${var: store.address.enterEirCode:then(${var: store.address.eircodeOnly.addressLine2:orNull}, ${var: store.address.lookup.addressLine2:orNull})})}",
+"city": "${var: store.address.enterManually:then(${var: store.address.manual.city}, ${var: store.address.enterEirCode:then(${var: store.address.eircodeOnly.city}, ${var: store.address.lookup.city})})}",
+"countryCode": "${var: store.address.enterManually:then(${var: store.address.manual.country}, ${var: store.address.enterEirCode:then(${var: store.address.eircodeOnly.countryCode}, ${var: store.address.lookup.countryCode})})}",
+"eirCode": "${var: store.address.enterManually:then(${var: store.address.manual.eircode:orNull}, ${var: store.address.enterEirCode:then(${var: store.address.eircodeOnly.eircode:orNull}, ${var: store.address.lookup.eircode:orNull})})}",
+"matchLevel": "${var: store.address.enterManually:then(, ${var: store.address.enterEirCode:then(${var: store.address.eircodeOnly.matchLevel:toString}, ${var: store.address.lookup.matchLevel:toString})})}"
+
+
+
+
+"details": {
+  "CARDS.POSTAL-ADDRESS.INPUTS.ADDRESS-LINE-1.PLACEHOLDER": "${var: store.address.samePostalAddress:then(${var: store.address.enterManually:then(${var: store.address.manual.addressLine1}, ${var: store.address.enterEirCode:then(${var: store.address.eircodeOnly.addressLine1}, ${var: store.address.lookup.addressLine1})})}, ${var: store.address.customerAddress.addressLine1})}",
+
+  "CARDS.POSTAL-ADDRESS.INPUTS.ADDRESS-LINE-2.PLACEHOLDER": "${var: store.address.samePostalAddress:then(${var: store.address.enterManually:then(${var: store.address.manual.addressLine2:orNull}, ${var: store.address.enterEirCode:then(${var: store.address.eircodeOnly.addressLine2:orNull}, ${var: store.address.lookup.addressLine2:orNull})})}, ${var: store.address.customerAddress.addressLine2})}",
+
+  "CARDS.POSTAL-ADDRESS.INPUTS.CITY-TOWN.PLACEHOLDER": "${var: store.address.samePostalAddress:then(${var: store.address.enterManually:then(${var: store.address.manual.city}, ${var: store.address.enterEirCode:then(${var: store.address.eircodeOnly.city}, ${var: store.address.lookup.city})})}, ${var: store.address.customerAddress.city})}",
+
+  "CARDS.POSTAL-ADDRESS.INPUTS.COUNTY.PLACEHOLDER": {
+    "type": "lookup",
+    "map": "county",
+    "key": "${var: store.address.samePostalAddress:then(${var: store.address.enterManually:then(${var: store.address.manual.country}, ${var: store.address.enterEirCode:then(${var: store.address.eircodeOnly.countyCode}, ${var: store.address.lookup.countyCode})})}, ${var: store.address.customerAddress.countyCode})}"
+  },
+
+  "CARDS.POSTAL-ADDRESS.INPUTS.EIRCODE.PLACEHOLDER": "${var: store.address.samePostalAddress:then(${var: store.address.enterManually:then(${var: store.address.manual.eircode:orNull}, ${var: store.address.enterEirCode:then(${var: store.address.eircodeOnly.eircode:orNull}, ${var: store.address.lookup.eircode:orNull})})}, ${var: store.address.customerAddress.eircode})}"
+}
